@@ -34,6 +34,7 @@ CONF_CONTROLLER_DATA = "controller_data"
 CONF_DELAY = "delay"
 CONF_POWER_SENSOR = 'power_sensor'
 
+TURN_ON = "on"
 SPEED_OFF = "off"
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
@@ -102,6 +103,7 @@ class SmartIRFan(FanEntity, RestoreEntity):
         self._speed_list = device_data['speed']
         self._commands = device_data['commands']
         
+        self._is_on = False
         self._speed = SPEED_OFF
         self._direction = None
         self._last_on_speed = None
@@ -170,6 +172,10 @@ class SmartIRFan(FanEntity, RestoreEntity):
             self._speed != SPEED_OFF):
             return STATE_ON
         return SPEED_OFF
+
+    @property
+    def is_on(self):
+        return self._is_on
 
     @property
     def percentage(self):
@@ -248,15 +254,24 @@ class SmartIRFan(FanEntity, RestoreEntity):
 
     async def async_turn_on(self, percentage: int = None, preset_mode: str = None, **kwargs):
         """Turn on the fan."""
-        if percentage is None:
+        if self._commands.get('on'):
+            command = self._commands['on']
+            try:
+                await self._controller.send(command)
+                self.is_on = True
+            except Exception as e:
+                _LOGGER.exception(e)
+        elif percentage is None:
             percentage = ordered_list_item_to_percentage(
                 self._speed_list, self._last_on_speed or self._speed_list[0])
+            self.is_on = True
 
-        await self.async_set_percentage(percentage)
+        self.async_write_ha_state()
 
     async def async_turn_off(self):
         """Turn off the fan."""
         await self.async_set_percentage(0)
+        self._is_on = False
 
     async def send_command(self):
         async with self._temp_lock:

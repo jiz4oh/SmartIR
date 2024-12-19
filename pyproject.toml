@@ -1,0 +1,22 @@
+[project]
+name = "SmartIR"
+version = "0.1.0"
+description = "Default template for PDM package"
+authors = [
+    {name = "jiz4oh", email = "me@jiz4oh.com"},
+]
+dependencies = [
+    "voluptuous>=0.13.1",
+    "homeassistant>=2023.12.4",
+]
+requires-python = ">=3.12"
+readme = "README.md"
+license = {text = "MIT"}
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+
+[tool.pdm]
+distribution = true
